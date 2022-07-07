@@ -2,7 +2,14 @@
  \label{chap:disc}
  \section{Conclusions and Summary}
 
- \hl{Please add some introductory words here which say again (yes, again!) what the problems were at the outset of the thesis and that the thesis addressed them really well. Imagine you read this and the first section tells you about the glory of the wrapper, but you have no clue why this is needed and for what. The reader has to be taken by the hand and you can do this by explaining the problem first and then explain bit by bit how you solved it.}
+The aim of the thesis was to eliminate the explicit calls to the NESTML interface in the simulation script. The eliminated calls are then replaced by an automated workflow controled by the JIT mechanism running in the background. Two major components are built in the JIT mechansim to make it work seamsly without having a great impact on the simulation script. The main componoent is The Wrapper class that is responsible for intercepting the function calls in the NESTML interface and by either delaying their executions or apllying cetain pre- and post processing steps before or after the real function calls.
+
+The second component is the NodeCollectionProxy. Intercepting the call to the \texttt{Create} function, we were able to create a partial version of the NESTML model that provides functionalites retrieve and update the state of the instances before really being instantiated from the complete NESTML model. The role of the NodeCollectionProxy is to make the reteive and update calls for the partial version of the model work exactly as the complete models without the user noticing these changes. 
+
+Due to the existence of the of partial instances of the NESTML model in the Python level and the real complete instances of the model in the C++ level, we double the memory requirements of the simulation script. To abate the memory requirements, we adjust the internal model representation in the NestKernel by making the model independent of the storage of its properties. The adjusted new representation supports vectorization by groupping all instances of the same model into one central unit aslo called a vectorized model. The attributes of the vectorized model are in a vector from and their size is equal to the number of instances created during the simulation of that particular
+model type. Additionly, the vectorization opens up possibilites for future optimizations such as decomposing the generated C++ code of the NESTML block into indepenetend blocks and and incremently assmeling the models during the evolution of the simulation.
+
+In this chapter we give an overview of the main concepts introduced in the previous chapters and discuss potential improvments that could benefits from brining the JIT approach and vectorization more closer to each other.
 
 \subsection*{JIT Module: The Wrapper}
 
@@ -45,6 +52,6 @@ The \texttt{update()} function and other important functionalities related to th
 After removing the \texttt{NodeCollectionProxy} with the introduced modularity, the JIT module will have the only task of assembling the pieces of the model. It makes sure that the neuron model is connected with the correct synapse type without the necessity to run the code generation pipeline again to match the synapse type with the correct neuron model.
 
 
-\hl{Usually, you would have some (not too serious) final words here. Something like "With the newly designed and implemented features, neuroscientists can enjoy all benefits of code generation without any manual interaction, which results in more time for research and less time for typing."}
+Having custom written models built and loaded automatically at the runtime with any preconfigurations in the simulation script,  neuroscientists can enjoy all benefits of the code generation pipeline without any manual interaction, which results in more time for research and less time for typing.
 
 \cleardoublepage
