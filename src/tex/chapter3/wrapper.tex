@@ -850,163 +850,69 @@ The \texttt{Simulate()} method of PyNEST is intercepted by the \texttt{SimulateW
 
 \section{Usage}
 
-\hl{While enjoyed reading the chapter up to here a lot, I find the example pretty much useless for the reader. The reason for this is that it is 1) a bit too complex for my taste (it uses a lot of modeling concepts that have not been introduced anywhere) and 2) more importantly it is impossible to see the differences between the code parts with and without JIT in the current form of the presentation as different listings. Could you either try to make the listings go side-by-side or look like the diff view for a PR on GitHub where you see deleted lines in red and added lines in green? That would make the changes much more obvious and reduce the number of different listings the reader has to scroll between.}
 
-After the main design concepts and implementation details have been explained, we end this chapter by showing the changes that must be applied at the simulation script level to enable the JIT compilation. For the purpose of the following demonstration, we will use the \emph{STDP windows tutorial} from the official NESTML website \hl{add reference or link} in order to show the adjustments required in a real-world example.
+After the main design concepts and implementation details have been explained, we end this chapter by showing the changes that must be applied at the simulation script level to enable the JIT compilation. Mainly the changes only effect how models are generated and installed during the simulation.
 
-The first lines that are affected when using the JIT mechanism are directly at the beginning of the script, where modules are imported. The corresponding code section is shown in \autoref{lst:imports_with_and_without_jit}. While the original script without the JIT mechanism enabled requires us to import both PyNEST and PyNESTML manually, and also to set the path of the NEST installation, the version with JIT compilation activated only requires single import line to make the \texttt{nest} sub-module of the JIT module available. The rest of the import lines stay unchanged.
+The first lines that are affected when using the JIT mechanism are directly at the beginning of the script, where modules are imported. The corresponding code section is shown in \autoref{lst:imports_with_and_without_jit}. While the original script without the JIT mechanism enabled requires us to import both PyNEST and PyNESTML manually, and also to set the path of the NEST installation, the version with JIT compilation activated only requires single import line to make the \texttt{nest} sub-module of the JIT module available.
 
 \begin{figure}[ht!]
 \centering
-\begin{lstlisting}[language=Pydiff, label=lst:imports_with_and_without_jit, caption={The Simulation script imports with and without the JIT mechanism enabled. Lines that are necessary without are shown in red, lines in the new version are shown in green.}]
+\begin{lstlisting}[language=Pydiff, label=lst:imports_with_and_without_jit, caption={The Simulation script imports with and without the JIT mechanism enabled. Lines that are necessary without the JIT module are shown in red, lines in the new version are shown in green.}]
+# Without JIT
 - import nest
 - from pynestml.frontend.pynestml_frontend import generate_nest_target
 - NEST_PREFIX = nest.ll_api.sli_func("statusdict/prefix ::")
+
+# With JIT
 + from jit import nest
 
-%matplotlib inline
-import matplotlib as mpl
-mpl.rcParams['axes.formatter.useoffset'] = False
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import re
 \end{lstlisting}
 %\caption{The Simulation script imports without JIT}
 %\label{fig:imports_without_jit}
 \end{figure}
 
-\autoref{lst:generating_code} that takes as parameter the synapse model name. The function retrieves the \emph{nestml} file for the given synapse and also the \emph{nestml} file for the \texttt{iaf\_psc\_delta} neuron model and then triggers the co-code generation for both models together providing the \texttt{post\_ports} that required for connecting the postsynaptic neuron together with the synapse. Finally, once the code generation pipeline finishes, it installs the new library, which makes the specified model available for use in the simulation script and returns the new expected name of the neuron and synapse that both have the \emph{\_\_with\_} infix. Luckily, using JIT we can simply get rid of this huge function and let it completely take care of the models, and their new names. Even the \texttt{nest.Install} function on the line 41 will also be deleted, and only the JIT is responsible for calling it.
 
-\hl{where is this function \texttt{generate\_code\_for\_nestml} used? I think this should be added to the following listing and used there. This way you could also show that a large block of really complicated code goes away using your new mechanism.}
-
-\begin{figure}[ht!]
-%\caption{The code-generation phase}
-\thisfloatpagestyle{empty}
-\begin{lstlisting}[language=Python, label=lst:generating_code, caption={The code-generation phase}]
-n_modules_generated = 0
-def generate_code_for(nestml_synapse_model: str):
-    """Generate code for a given synapse model, passed as a string, in combination with
-    the iaf_psc_delta model.
-
-    NEST cannot yet reload modules. Workaround using counter to generate unique names."""
-    global n_modules_generated
-
-    # append digit to the neuron model name and neuron model filename
-    with open("models/neurons/iaf_psc_delta.nestml", "r") as nestml_model_file_orig:
-        nestml_neuron_model = nestml_model_file_orig.read()
-        nestml_neuron_model = re.sub("neuron\ [^:\s]*:",
-                                     "neuron iaf_psc_delta" + str(n_modules_generated) + ":", nestml_neuron_model)
-        with open("models/neurons/iaf_psc_delta" + str(n_modules_generated) + ".nestml", "w") as nestml_model_file_mod:
-            print(nestml_neuron_model, file=nestml_model_file_mod)
-
-    # append digit to the synapse model name and synapse model filename
-    nestml_synapse_model_name = re.findall("synapse\ [^:\s]*:", nestml_synapse_model)[0][8:-1]
-    nestml_synapse_model = re.sub("synapse\ [^:\s]*:",
-                                  "synapse " + nestml_synapse_model_name + str(n_modules_generated) + ":", nestml_synapse_model)
-    with open("models/synapses/" + nestml_synapse_model_name + str(n_modules_generated) + ".nestml", "w") as nestml_model_file:
-        print(nestml_synapse_model, file=nestml_model_file)
-
-    # generate the code for neuron and synapse (co-generated)
-    module_name = "nestml_" + str(n_modules_generated) + "_module"
-    generate_nest_target(input_path=["models/neurons/iaf_psc_delta" + str(n_modules_generated) + ".nestml",
-                                     "models/synapses/" + nestml_synapse_model_name + str(n_modules_generated) + ".nestml"],
-                         target_path="/tmp/nestml_module",
-                         logging_level="ERROR",
-                         module_name=module_name,
-                         suffix="_nestml",
-                         codegen_opts={"nest_path": NEST_PREFIX,
-                                       "neuron_parent_class": "StructuralPlasticityNode",
-                                       "neuron_parent_class_include": "structural_plasticity_node.h",
-                                       "neuron_synapse_pairs": [{"neuron": "iaf_psc_delta" + str(n_modules_generated),
-                                                                   "synapse": nestml_synapse_model_name + str(n_modules_generated),
-                                                                   "post_ports": ["post_spikes"]}]})
-
-    # load module into NEST
-    nest.ResetKernel()
-    nest.Install(module_name)
-
-    mangled_neuron_name = "iaf_psc_delta" + str(n_modules_generated) + "_nestml__with_" + nestml_synapse_model_name + str(n_modules_generated) + "_nestml"
-    mangled_synapse_name = nestml_synapse_model_name + str(n_modules_generated) + "_nestml__with_iaf_psc_delta" + str(n_modules_generated) + "_nestml"
-
-    n_modules_generated += 1
-
-    return mangled_neuron_name, mangled_synapse_name
-\end{lstlisting}
-
-%\label{fig:generating_code}
-\end{figure}
-
-As most of the code in the simulation is obviously concerned with setting up and running a neuronal simulation, and not with handling code generation, many of the following lines remain unchanged.
-
-
-
-Finlay, we reach the part where we have to create the nodes and connect them to build the network. Both the figures \autoref{lst:build_network_with_and_without_jit} and \autoref{lst:build_network_without_jit} share the exact the code, apart from a slight difference in the line 44 when calling the \texttt{nest.Connect} function. In the figure \autoref{lst:build_network_with_jit} we add an extra key in the \texttt{syn\_spec} indicating the \emph{post connection ports} between the synapse and the post-neuron. The new key then will be removed from the \texttt{syn\_spec} dictionary and only be used in the code generation pipeline as one of the custom configurations in the \emph{codegen\_opt} in PyNESTML module. The rest of the dictionary is then forwarded to \texttt{ConnectWrapper} to initiate the correct call to the \texttt{nest.Connect} function.
+The second workflow that is affected by the the JIT approach is the way how models are generated and installed during the simultion, and espcially how the network is created. In \autoref{lst:create_connect_diff}, the call to the \texttt{generate\_nest\_target} function in the PyNESTML module is completly removed along with the \texttt{nest.Install} function. Instead of specifying the new name of the neuron model that is compatible with the synape model, which will be used in the \texttt{nest.Connect} function, we simply use the original name of the neuron model in the \texttt{nest.Create} function. In the \texttt{nest.CopyModel}, we also use only the original synapse name, not the new name registered in the library. The JIT module tracks these name changes and ensures always the use of the correct model. Finaly in the \texttt{nest.Connect} function, we expand the \texttt{syn\_spec} dictionary by the new key \texttt{post\_ports} that refers to the port connecting the post-synaptic neuron with the synapse that was originaly given in the \texttt{generate\_nest\_target} function as key in the \texttt{codegen\_opts} dictionay.
 
 
 \begin{figure}[ht!]
 \centering
-%\caption{Creating the network with JIT}
+\begin{lstlisting}[language=Pydiff, label=lst:create_connect_diff, caption={ Installing new models and creating the network with and without the JIT mechanism. Lines that are necessary without the JIT module are shown in red, lines in the new version are shown in green.}]
+# Without JIT
+- params = {"input_path": ["/neuron_model.nestml, "/synapse_model.nestml"],
+-            "target_path":"/path/to/store/generated_code",
+-            "module_name":"external_lib_module",
+-            "codegen_opts" : 
+-             {"neuron_parent_class":"StructuralPlasticityNode",
+-              "neuron_parent_class_include":"structural_plasticity_node.h",
+-              "neuron_synapse_pairs":[ 
+-                    {"neuron": "neuron_model",
+-                    "synapse": "synapse_model", 
+-                    "post_ports": ["post_spikes"]}]}}
 
-\begin{lstlisting}[language=Pydiff, label=lst:build_network_with_and_without_jit, caption={Creating the network with and without the JIT mechanism enabled. Color coding as in \autoref{lst:imports_with_and_without_jit}}]
-def run_network(pre_spike_time, post_spike_time,
-                          neuron_model_name,
-                          synapse_model_name,
-                          resolution=1., # [ms]
-                          delay=1., # [ms]
-                          lmbda=1E-6,
-                          sim_time=None,  # if None, computed from pre and post spike times
-                          synapse_parameters=None,  # optional dictionary passed to the synapse
-                          fname_snip=""):
+- generate_nest_target(**params)
+- nest.Install("external_lib_module")
+- nodes = nest.Create("neuron_model__with_synapse_model", 2)
+nodes.set("attribute_name"= [v1, v2])
+- nest.CopyModel("synapse_model__with_neuron_model", "synapse_new_name")
+nest.Connect(nodes[0], nodes[1], syn_spec="synapse_new_name", {"w": 2})
 
-    nest.set_verbosity("M_WARNING")
-    #nest.set_verbosity("M_ALL")
-
-    nest.ResetKernel()
-    nest.SetKernelStatus({'resolution': resolution})
-
-    wr = nest.Create('weight_recorder')
-    nest.CopyModel(synapse_model_name, "stdp_nestml_rec",
-                {"weight_recorder": wr[0],
-                 "w": 1.,
-                 "delay": delay,
-                 "d": delay,
-                 "receptor_type": 0,
-                 "mu_minus": 0.,
-                 "mu_plus": 0.})
-
-    # create spike_generators with these times
-    pre_sg = nest.Create("spike_generator",
-                         params={"spike_times": [pre_spike_time, sim_time - 10.]})
-    post_sg = nest.Create("spike_generator",
-                          params={"spike_times": [post_spike_time],
-                                  'allow_offgrid_times': True})
-
-    # create parrot neurons and connect spike_generators
-    pre_neuron = nest.Create("parrot_neuron")
-    post_neuron = nest.Create(neuron_model_name)
-
-    spikedet_pre = nest.Create("spike_recorder")
-    spikedet_post = nest.Create("spike_recorder")
-    #mm = nest.Create("multimeter", params={"record_from" : ["V_m"]})
-
-    nest.Connect(pre_sg, pre_neuron, "one_to_one", syn_spec={"delay": 1.})
-    nest.Connect(post_sg, post_neuron, "one_to_one", syn_spec={"delay": 1., "weight": 9999.})
--    nest.Connect(pre_neuron, post_neuron, "all_to_all", syn_spec={'synapse_model': 'stdp_nestml_rec'})
-+    nest.Connect(pre_neuron, post_neuron, "all_to_all", syn_spec={'synapse_model': 'stdp_nestml_rec', "post_ports": ["post_spikes"]})
-    #nest.Connect(mm, post_neuron)
-
-    nest.Connect(pre_neuron, spikedet_pre)
-    nest.Connect(post_neuron, spikedet_post)
-
-    nest.Simulate(sim_time)
-
-    # rest is retrieving results from spikes
-    ...
+# With JIT
++ nodes = nest.Create("neuron_model", 2)
+nodes.set("attribute_name"= [v1, v2])
++ nest.CopyModel("synapse_model", "synapse_new_name", {"w":2})
++ nest.Connect(nodes[0], nodes[1], syn_spec={
++                                   "synapse_mode": "synapse_new_name",
++                                   "post_ports": ["post_spikes"]})
 
 \end{lstlisting}
-%\label{fig:build_network_with_jit}
+%\caption{The Simulation script imports without JIT}
+%\label{fig:imports_without_jit}
 \end{figure}
+
+
+Once might have expected that the design of the JIT mechanism could have significantly affected the Python script for running the neural simulation. The design of JIT was precisely made to have the least number of changes on the simulation script that hides the manual parts in the script in an automated workflow controlled by the JIT module.
+
 
 \section{Summary}
 

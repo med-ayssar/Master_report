@@ -87,7 +87,7 @@ PyNESTML can generate code for different target platforms, but for the scope of 
 
 \begin{figure}[ht!]
     \centering
-    \includegraphics[width=0.9\linewidth]{src/pic//nestm_model.png}
+    \includegraphics[width=0.9\linewidth]{src/pic//nestml_model.png}
     \caption{\textbf{The neuron NESTML model \cite[taken from][]{perun2018reengineering}}: A neuron in NESTML is always declared with the \emph{neuron} keyword with providing the name that will be used as reference to model in the simulation. Each neuron may have several blocks defining its behave during the simulation. The \emph{state}, \emph{parameters} blocks hold the model's attributes that can be set before running the simulation. The attributes inside the parameters blocks are invariant during the simulation. The attrbiutes in the state block however are subject to change. The manner how the attributes in the state block may change is defined in the \emph{update} block. The update block defines how the neuron model should behave during each step in the simulation. The in- and out-ports of the neuron are defined in the input and output block. A model written in NESTML can be configured to
     receive two distinct types of input: spikes and continuous-time values.} 
     \label{fig:neuron_model}
