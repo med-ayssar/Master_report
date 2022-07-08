@@ -34,7 +34,7 @@ The function \texttt{register\_node\_model()} checks if another model under the 
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=\textwidth]{src/pic/register.png}
-\caption{Registering new models in the NestKernel: The message sequence chart depicts the interaction between the components in the NestKernel responsible for registering new custom external models.}
+\caption{\textbf{Registering new models in the NestKernel}: The message sequence chart depicts the interaction between the components in the NestKernel responsible for registering new custom external models.}
 \label{fig:nestkernel_register}
 \end{figure}
 
@@ -45,7 +45,7 @@ The \texttt{NodeManager} is responsible for creating nodes, parametrizing them a
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=0.6\textwidth]{src/pic/nodes_creation.png}
-\caption{Creating new instances of the registered models in the NestKernel: The message sequence chart depicts the interaction between the components in the NestKernel responsible for creating new instances of any arbitrary registered model.}
+\caption{\textbf{Creating new instances of the registered models in the NestKernel}: The message sequence chart depicts the interaction between the components in the NestKernel responsible for creating new instances of any arbitrary registered model.}
 \label{fig:nestkernel_creation}
 \end{figure}
 
@@ -57,7 +57,7 @@ Although PyNEST and the NestKernel are usually used together, they are completel
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=0.7\textwidth]{src/pic/The-architecture-of-PyNEST-The-lowest-level-is-the-simulation-engine-It-is-used-by.png}
-\caption{The architecture of PyNEST (taken from \citep{epp}): The lowest level is the simulation engine implemented by the NestKernel. It is used by the simulation language interpreter SLI and by the PyNEST low-level API. The PyNEST high-level API uses the low-level API to communicate with the simulation engine. The user’s simulation code can use functions from PyNEST, from Python, and from its extension modules.}
+\caption{\textbf{The architecture of PyNEST (taken from \citep{epp})}: The lowest level is the simulation engine implemented by the NestKernel. It is used by the simulation language interpreter SLI and by the PyNEST low-level API. The PyNEST high-level API uses the low-level API to communicate with the simulation engine. The user’s simulation code can use functions from PyNEST, from Python, and from its extension modules.}
 \label{fig:pynest}
 \end{figure}
 
@@ -77,7 +77,7 @@ The PyNEST high-level API obviously provides many other important functions, lik
 
 \section{PyNESTML: the code generator}
 
-As explained in \autoref{chap:intro}, models for NEST are created using the NEST Modelling language NESTML. To make its use easier for the users, NESTML also provides a convenient Python interface called PyNESTML. For simplicity, we sometimes use the terms NESTML and PyNESTML interchangibly.
+As explained in \Autoref{chap:intro}, models for NEST are created using the NEST Modelling language NESTML. To make its use easier for the users, NESTML also provides a convenient Python interface called PyNESTML. For simplicity, we sometimes use the terms NESTML and PyNESTML interchangibly.
 
 The first step in each simulation script using an external model is to call the \texttt{generate\_target()} function that is responsible for all steps to make the model available to the NestKernel. This includes generating the code, building the library and adding it to the installation path. The function takes a set of mandatory parameters to ensure the correctness of the code generation. The first parameter is the \texttt{input\_path} which specifies the location of the model in the file system. If this parameter is given as a list of paths, NESTML will generate the code for multiple models at once. In this thesis we only use the second form when we want to co-generate neuron and synapse models together, and in all other cases we only generate one model at a time.
 
@@ -106,7 +106,7 @@ Each neuron model in NESTML is read by a parser and converted to an intermediate
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=0.8\textwidth]{src/pic/internal_workflow.png}
-\caption{An overview of the processing workflow in PyNESTML: The process starts by feeding the NESTML models to the code generation pipeline. The first step in the pipeline starts by parsing the models and validating their syntax. Once the first step is completed, the models are transformed from NESTML files to AST objects. The pipeline moves to the next step by transforming the AST objects. The transformations may extend the structure of the AST by introducing new attributes or modifying model attributes. The last step in the pipeline takes the transformed AST object and generates the C++ code for the model by using custom defined templates. If all steps are completed without any failure, the pipeline can compile and build a library from the generated code of the model on request and make it available for the simulation.}
+\caption{\textbf{An overview of the processing workflow in PyNESTML}: The process starts by feeding the NESTML models to the code generation pipeline. The first step in the pipeline starts by parsing the models and validating their syntax. Once the first step is completed, the models are transformed from NESTML files to AST objects. The pipeline moves to the next step by transforming the AST objects. The transformations may extend the structure of the AST by introducing new attributes or modifying model attributes. The last step in the pipeline takes the transformed AST object and generates the C++ code for the model by using custom defined templates. If all steps are completed without any failure, the pipeline can compile and build a library from the generated code of the model on request and make it available for the simulation.}
 %\source{\url{https://nestml.readthedocs.io/en/latest}}
 \label{fig:pynestml_workflow}
 \end{figure}
