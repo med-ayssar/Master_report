@@ -32,6 +32,17 @@
 \usepackage{tcolorbox}
 \usepackage{soul}
 
+
+
+\newcommand{\Autoref}[1]{%
+  \begingroup%
+  \def\chapterautorefname{Chapter}%
+  \def\sectionautorefname{Section}%
+  \def\subsectionautorefname{Subsection}%
+  \autoref{#1}%
+  \endgroup%
+}
+
 \newcommand{\todobox}[1]{\begin{tcolorbox}[colback=yellow]#1\end{tcolorbox}}
 \DeclareRobustCommand{\hlcyan}[1]{{\sethlcolor{cyan}\hl{#1}}}
 
