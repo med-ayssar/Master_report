@@ -25,7 +25,7 @@ In the first experiment in testing the JIT module, we run the \emph{Brunel} netw
 
 In the \autoref{fig:max_average_min}, we show the box plot for three different possible cases that might appear when running the simulation script. The first box (the blue box) represents the runtime when running the simulation script with explicitly calling the PyNESTML module and manually generating the code for the neuron model. The second box (the orange box) represents the runtime when running the simulation with the JIT module with the neuron model being already built in the library. Lastly, the green box represents the runtime when running the simulation with the JIT module and with the neuron model being solely in a NESTML format. All the three experiments share the same network topology and only differ in the way how the model instances are loaded and created. We run each experiment 20 times, and in each run we store the runtime of the whole simulation script.
 
-The first case (i.e., \emph{Without\_Jit}) has the lowest runtime, and it took on average 90 seconds to finish the simulation. On the other hand, the average runtime for the \emph{Jit\_Lib} took around 90 seconds, and the \emph{Jit\_Nestml} took around 120 seconds.  Both the first case and the second case have almost the same behavior, with the exception that the \emph{minimum} runtime for the second case was a bit higher\todo{can you be more precise, e.g. give a percentage increase}. This can be explained with the introduced overhead in the JIT module, and it is the most significant in the last case. All the three values of the \emph{Jit\_Nestml} are the highest among the other cases, and it can be explained by the time required for searching the model and maintaining \texttt{NodeCollectionProxy} by converting the \texttt{JitNodeCollection} to the real \texttt{NodeCollection} instances and copying the parameters from one instance to the other.
+The first case (i.e., \emph{Without\_Jit}) has the lowest runtime, and it took on average 90 seconds to finish the simulation. On the other hand, the average runtime for the \emph{Jit\_Lib} took around 90 seconds, and the \emph{Jit\_Nestml} took around 120 seconds.  Both the first case and the second case have almost the same behavior, with the exception that the \emph{minimum} runtime for the second case was around 3 seconds slower. This can be explained with the introduced overhead in the JIT module, and it is the most significant in the last case. All the three values of the \emph{Jit\_Nestml} are the highest among the other cases, and it can be explained by the time required for searching the model and maintaining \texttt{NodeCollectionProxy} by converting the \texttt{JitNodeCollection} to the real \texttt{NodeCollection} instances and copying the parameters from one instance to the other.
 
 
 \subsection*{Running The JIT Module with An external Synapse Type}
@@ -39,7 +39,7 @@ In the second experiment, we ran the \emph{STDP windows} simulation script from 
     \label{fig:overall_runtime}
 \end{figure}
 
-In \autoref{fig:overall_runtime}, we analyze the runtime of the whole script, and then we take a look at the runtime of the function responsible for creating the network in each iteration. At the top left in the figure, plot \emph{a}, we can observe the significant effect of using the JIT module with an external synapse type. The JIT module requires on average around 650 seconds ($\frac{(10^{5.8})ms}{1000}$) \todo{this is hard to read; just provide values in seconds; please change the vertical axis labels on fig 5.2 to just be in seconds rather than in log10(seconds)}, whereas the normal execution took around 50 seconds to finish. The minimum runtime of the JIT approach is also very high in comparison to the normal mode. If we observe the second plot, plot \emph{b}, at the top, we can straightforward see the reason behind the 700 seconds runtime. The first iteration alone took more than 40 seconds to finish, whereas the normal execution took less than one second to finish. This difference is caused by the same overhead discussed above, plus now we have to trigger the code generation pipeline again and replace the \emph{source/target} elements in the network with the new correct neuron model and update its state with the synapse instance. 
+In \autoref{fig:overall_runtime}, we analyze the runtime of the whole script, and then we take a look at the runtime of the function responsible for creating the network in each iteration. At the top left in the figure, plot \emph{a}, we can observe the significant effect of using the JIT module with an external synapse type. The JIT module requires on average around 650 seconds, whereas the normal execution took around 50 seconds to finish. The minimum runtime of the JIT approach is also very high in comparison to the normal mode. If we observe the second plot, plot \emph{b}, at the top, we can straightforward see the reason behind the 700 seconds runtime. The first iteration alone took more than 40 seconds to finish, whereas the normal execution took less than one second to finish. This difference is caused by the same overhead discussed above, plus now we have to trigger the code generation pipeline again and replace the \emph{source/target} elements in the network with the new correct neuron model and update its state with the synapse instance. 
 
 In the third plot, plot \emph{c}, at the bottom left of the figure, we show the average time needed by all the 151 iterations in each run. The most left box representing the baseline of the experiment is almost the same as the one in the plot \emph{b}, which means that all runs of the function take on average the same amount of time. However, the other two experiments show a slight change in the runtime. The average runtime for both experiments using the JIT module have lower values than the box on the top right plot \emph{b}. The reason behind it is that the first iteration requires more time to find the model and make it available, whereas the subsequent iterations are only affected by the overhead of maintaining the logic of the JIT mechanism in the background.
 
@@ -47,8 +47,9 @@ In the third plot, plot \emph{c}, at the bottom left of the figure, we show the 
 
 \section{Vectoriztation}
 
-As NestKernel does not completely support vectorization yet, we restrict our tests to the direct functions involved with the vectorized model. We tested both the \texttt{nest.Create} and \texttt{nest.GetStatus} functions. Both experiments share the same configuration, mainly, we can either change the number of created nodes and keep the number of threads constant or vice-versa. The experiments are executed on a \emph{Ryzen 7 3700u} processor with four cores and eight threads. \todo{what about the experiment in 5.1? move this information to start of section}
-For the number of the nodes, we have picked \{1, 10, 30, 50, 100, 300, 500, 2000, 5000, 8000, 1000\} and for the number of threads we have \{1, 2, 4, 8, 16, 32\}. Each sub-experiment is run five times, by storing the \emph{Wall} time\todo{define briefly} in a \emph{csv} file containing the runtime of the \emph{vectorized} and \emph{non-vectorized} model. In each sub-experiment, we have three plots. In the first plot on the left, we show the \emph{max-average-min} runtime of the \emph{vectorized} model. The middle plot shows the \emph{max-average-min} runtime of the simple \emph{non-vectorized} model. Finally, the last plot on the right, overlays the average runtime for both models in a single plot. >>The \emph{y-axis} in the first two plots shows the values after applying the \emph{logarithmic} function with base 10 on the runtime values, which are stored in microseconds, whereas the values in the last plot are only in microseconds.<< \todo{make this consistently in seconds (or ms), e.g. ticks/labels at 1 ms, 10 ms, 100 ms, ...}
+As NestKernel does not completely support vectorization yet, we restrict our tests to the direct functions involved with the vectorized model. We tested both the \texttt{nest.Create} and \texttt{nest.GetStatus} functions. Both experiments share the same configuration, mainly, we can either change the number of created nodes and keep the number of threads constant or vice-versa. The experiments are executed on a \emph{Ryzen 7 3700u} processor with four cores and eight threads.
+
+For the number of the nodes, we have picked \{1, 10, 30, 50, 100, 300, 500, 2000, 5000, 8000, 1000\} and for the number of threads we have \{1, 2, 4, 8, 16, 32\}. Each sub-experiment is run five times, by storing the \emph{Wall} time as the real elasped time of executing the single functions in a \emph{csv} file containing the runtime of the \emph{vectorized} and \emph{non-vectorized} model. In each sub-experiment, we have three plots. In the first plot on the left, we show the \emph{max-average-min} runtime of the \emph{vectorized} model. The middle plot shows the \emph{max-average-min} runtime of the simple \emph{non-vectorized} model. Finally, the last plot on the right, overlays the average runtime for both models in a single plot. The \emph{y-axis} in the first two plots shows the values after applying the \emph{logarithmic} function with base 10 on the runtime values, which are stored in microseconds, whereas the values in the last plot are only in microseconds.
 
 \subsection{The \texttt{Create} function}
 
@@ -63,60 +64,59 @@ In \autoref{fig:threads_2}, we observe the same performance for both types of mo
 
 In the rest of the figures with threads in \{8, 16, 32\}, we observe that the vectorized model gets slower and the gap between both models gets wider but still in the range of a few milliseconds.
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_1.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=1}: The left plot depicts the average performance of the vectorized model. The plot in the model shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.\todo{remove figure suptitle; redundant with caption}}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=1}: The left plot depicts the average performance of the vectorized model. The plot in the model shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
     \label{fig:threads_1}
 \end{figure}
-\todo{6 separate figures here which might go better as a single one. Consider using only 4 values for the number of threads rather than 6}
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_2.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=2}: The left plot depicts the average performance of the vectorized model. The plot in the middle shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=2}: For description see \autoref{fig:threads_1}.}
     \label{fig:threads_2}
 \end{figure}
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_4.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=4}: The left plot depicts the average performance of the vectorized model. The plot in the middle shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=4}: For description see \autoref{fig:threads_1}.}
     \label{fig:threads_4}
 \end{figure}
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_8.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=8}: The left plot depicts the average performance of the vectorized model. The plot in the middle shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=8}: For description see \autoref{fig:threads_1}.}
     \label{fig:threads_8}
 \end{figure}
 
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_16.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=16}: The left plot depicts the average performance of the vectorized model. The plot in the middle shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=16}: For description see \autoref{fig:threads_1}.}
     \label{fig:threads_16}
 \end{figure}
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_32.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=32}: The left plot depicts the average performance of the vectorized model. The plot in the middle shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=32}: For description see \autoref{fig:threads_1}.}
     \label{fig:threads_32}
 \end{figure}
 
 \subsubsection{Varying the number of threads with a constant number of nodes}
 
 
-In general, the plots between \autoref{fig:nodes_1} and \autoref{fig:nodes_10000} show that the \texttt{nest.Create} function has a consistent behavior. In all the plots, we can observe the discontinuity that happens around the points where the number of threads are 4, 8 and 16. At these points the slope changes significantly, and the reason behind it is the processor specification. Recall that we ran the experiments on a four-core processor. In general, the vectorized model is a bit slower than the non-vectorized model and the largest difference can be observed in the \autoref{fig:nodes_5000} with 5000 nodes. Compared to the previous experiment with fixed number of threads, the min-max area seems to be a bit wider, which might implicate that the current average results might be a bit noisy.\todo{this is just saying the same thing twice: wider area, more "noise" (variability) in the numbers. But why?}
+In general, the plots between \autoref{fig:nodes_1} and \autoref{fig:nodes_10000} show that the \texttt{nest.Create} function has a consistent behavior. In all the plots, we can observe the discontinuity that happens around the points where the number of threads are 4, 8 and 16. At these points the slope changes significantly, and the reason behind it is the processor specification. Recall that we ran the experiments on a four-core processor. In general, the vectorized model is a bit slower than the non-vectorized model and the largest difference can be observed in the \autoref{fig:nodes_5000} with 5000 nodes. In the worst case the vectorized model took around 0.02 seconds creating 5000 nodes with 32 threads, wheras the non-vectorized model took around 0.006 seconds. The difference can be explained by the overhead coming from the virtual functions and the resize function that must allocate enough space for the 5000 nodes.
 
 \foreach \n in {1, 10, 30, 50, 100, 300, 500, 2000, 5000, 8000, 10000}
 {
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/nodes_\n.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of nodes=\n}: The left plot depicts the average performance of the vectorized model. The plot in the model shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of nodes=\n}: For description see \autoref{fig:threads_1}.}
     \label{fig:nodes_\n}
 \end{figure}
 }
@@ -129,17 +129,17 @@ Even with the \texttt{nest.GetStatus} not fully being optimized to support vecto
 
 \foreach \n in {2, 4, 8, 16, 32}
 {
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/get_thread_\n.png}
-    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of nodes=\n}: The left plot depicts the average performance of the vectorized model. The plot in the middle shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of nodes=\n}: For description see \autoref{fig:threads_1}.}
     \label{fig:get_threads_\n}
 \end{figure}
 }
 
 \subsubsection*{Varying the number of threads with a constant number of nodes}
 
-The \texttt{nest.GetStatus} with varying the number of threads has a very different behavior. In \autoref{fig:get_nodes_1}, both models have the same direction of variation with the only difference that at $threads=16$ we observe that the vectorized model is becoming a bit faster. The min-max area in both models is also almost the same. With the number of nodes equal to 10 in \autoref{fig:get_nodes_10}, we observe that between the points\todo{points refers to what? num nodes? then say that instead} 6 and 16 the vectorized model is significantly faster, but then starting from 16 the vectorized model becomes slower again. In both plots, the min-max area is very noisy.\todo{say "has large variability" w.r.t. the data instead}
+The \texttt{nest.GetStatus} with varying the number of threads has a very different behavior. In \autoref{fig:get_nodes_1}, both models have the same direction of variation with the only difference that at $threads=16$ we observe that the vectorized model is becoming a bit faster. The min-max area in both models is also almost the same. With the number of nodes equal to 10 in \autoref{fig:get_nodes_10}, we observe that between the points with number of threads equal to 6 and 16 the vectorized model is significantly faster, but then starting from 16 the vectorized model becomes slower again.
 
 
 In \autoref{fig:get_nodes_30}, both  models have the same behavior, with the vectorized model being a bit faster between the points 3 and 14 and then again after 20. Both min-max areas have almost the same shape. In \autoref{fig:get_nodes_50}, the average performance between the models is significantly slower with 1500 microseconds on average. Again, we directly observe the points where the slope of the curves changes. Those points are at position 4, 8 and 16. \autoref{fig:get_nodes_30} with 100 nodes shows also the same observations as in the \autoref{fig:get_nodes_30}.
@@ -152,14 +152,18 @@ Reaching higher number of nodes as in \autoref{fig:get_nodes_8000} with 8000 nod
 
 \foreach \n in {1, 10, 30, 50, 100, 300, 500, 2000, 5000, 8000, 10000}
 {
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \includegraphics[width=\textwidth]{src/pic/get_nodes_\n.png}
-    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of threads=\n}: The left plot depicts the average performance of the vectorized model. The plot in the middle shows the average performance of the original non-vectorized model in NEST. The last plot in the right overlays the average performance of both models. Additionally, in the first two plots in the left, we show the min-max area, and it is depicted in orange and red respectively.}
+    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of threads=\n}: For description see \autoref{fig:threads_1}.}
     \label{fig:get_nodes_\n}
 \end{figure}
 }
 
-\todo{I'm missing some interim conclusion or take-home message here. Perhaps move your conclusion about relationship to number of CPU cores/hardware threads to here}
 
 
+
+With the current implementation, the vectorization in its first prototype shows promissing results. The difference between the vectorized model and the non-vectorized is within fraction of seconds, and does not drastically impact NEST's performance. The next steps will be having a complete integration of the vectroization in the NestKernel and not only adjust the \texttt{GetStatus} function, but also the internal functions in NEST as the \texttt{update} function. The JIT module should then be combined with the vectorization to componsate for the slower behavior when using custom neuron and synapse models toghether in the connect calls.
+
+
+\afterpage{\blankpage}
 \cleardoublepage
