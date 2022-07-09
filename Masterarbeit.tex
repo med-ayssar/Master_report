@@ -31,7 +31,13 @@
 \usepackage{natbib}
 \usepackage{tcolorbox}
 \usepackage{soul}
+\usepackage{afterpage}
 
+\newcommand\blankpage{%
+    \null
+    \thispagestyle{empty}%
+    \addtocounter{page}{-1}%
+    \newpage}
 
 
 \newcommand{\Autoref}[1]{%
