@@ -8,7 +8,7 @@
  From the JIT tool perspective, we do not really care about the size of the network or its behavior, because we only simply retrieve the model and make it available to the simulation script. In that case, any neuronal network should be fine to test with. In the first experiment, we choose a random balanced network as  described by \citet{brunel2000dynamics}. For the second experiment with a custom synapse model, we build a network with a spike-timing dependent plasticity (STDP) synapse.
  
  
- For vectorization, we only test the \texttt{nest.Create} and \texttt{nest.GetStatus} functions by creating instances of the \emph{Izhikevich} \citep{1257420} neuron model with modifying the number of instances of the model and the number of used threads.
+ For vectorization, we only test the \texttt{nest.Create} and \texttt{nest.GetStatus} functions by creating instances of the \emph{Izhikevich} \citep{1257420} neuron model, with modifying the number of instances of the model and the number of used threads.
  
 \section{The JIT Module}
 
@@ -23,7 +23,7 @@ In the first experiment in testing the JIT module, we run the \emph{Brunel} netw
     \label{fig:max_average_min}
 \end{figure}
 
-In the \autoref{fig:max_average_min}, we show the box plot for three different possible cases that might appear when running the simulation script. The first box (the blue box) represents the runtime when running the simulation script with explicitly calling the PyNESTML module and manually generating the code for the neuron model. The second box (the orange box) represents the runtime when running the simulation with the JIT module with the neuron model being already built in the library. Lastly, the green box represents the runtime when running the simulation with the JIT module and with the neuron model being solely in a NESTML format. All the three experiments share the same network topology and only differ in the way how the model instances are loaded and created. We run each experiment 20 times, and in each run we store the runtime of the whole simulation script.
+In the \autoref{fig:max_average_min}, we show the box plot for three different possible cases that might appear when running the simulation script. The first box (the blue box) represents the runtime when running the simulation script with explicitly calling the PyNESTML module and manually generating the code for the neuron model. The second box (the orange box) represents the runtime when running the simulation with the JIT module, with the neuron model being already built in the library. Lastly, the green box represents the runtime when running the simulation with the JIT module and with the neuron model being solely in a NESTML format. All the three experiments share the same network topology and only differ in the way how the model instances are loaded and created. We run each experiment 20 times, and in each run we store the runtime of the whole simulation script.
 
 The first case (i.e., \emph{Without\_Jit}) has the lowest runtime, and it took on average 90 seconds to finish the simulation. On the other hand, the average runtime for the \emph{Jit\_Lib} took around 90 seconds, and the \emph{Jit\_Nestml} took around 120 seconds.  Both the first case and the second case have almost the same behavior, with the exception that the \emph{minimum} runtime for the second case was around 3 seconds slower. This can be explained with the introduced overhead in the JIT module, and it is the most significant in the last case. All the three values of the \emph{Jit\_Nestml} are the highest among the other cases, and it can be explained by the time required for searching the model and maintaining \texttt{NodeCollectionProxy} by converting the \texttt{JitNodeCollection} to the real \texttt{NodeCollection} instances and copying the parameters from one instance to the other.
 
@@ -58,7 +58,7 @@ For the number of the nodes, we have picked \{1, 10, 30, 50, 100, 300, 500, 2000
  In the first configuration in testing the \texttt{nest.Create} function, we fix the number of threads and vary the number of nodes. From the  \autoref{fig:threads_1} until \autoref{fig:threads_32}, we show the results of the experiments. For each number of threads, we display the performance of the \texttt{nest.Create} function with the vectorized model against the non-vectorized models. 
 
 
-In \autoref{fig:threads_1}, we observe that both types of models behave the same until reaching a number of nodes larger than 300 ($10^{2.5}$). The gap between the two models might be explained by the overhead required to resize the container of the vectorized model, as an reallocation of the data might take place when increasing the size of the container. After that point, the vectorized model starts to become a bit slower on average, but by a few microseconds. Another observation is that the min-max area of the vectorized model is a bit wide and gets more narrow after reaching $10^3$, whereas the min-max area for the non-vectorized model is almost always narrow, and it gets more narrow after reaching 300 nodes.
+In \autoref{fig:threads_1}, we observe that both types of models behave the same until reaching a number of nodes larger than 300 ($10^{2.5}$). The gap between the two models might be explained by the overhead required to resize the container of the vectorized model, as a reallocation of the data might take place when increasing the size of the container. After that point, the vectorized model starts to become a bit slower on average, but by a few microseconds. Another observation is that the min-max area of the vectorized model is a bit wide and gets more narrow after reaching $10^3$, whereas the min-max area for the non-vectorized model is almost always narrow, and it gets more narrow after reaching 300 nodes.
 
 In \autoref{fig:threads_2}, we observe the same performance for both types of models, even the \emph{max-min} area looks almost the same. As in the previous experience, the performance of the vectorized model becomes a bit slower after reaching 300 nodes with a few milliseconds in comparison to the non-vectorized model. In \autoref{fig:threads_4} with four threads, we have the same observation as in the \autoref{fig:threads_2} with two threads.
 
@@ -73,21 +73,21 @@ In the rest of the figures with threads in \{8, 16, 32\}, we observe that the ve
 \begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_2.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=2}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=2}: For description, see \autoref{fig:threads_1}.}
     \label{fig:threads_2}
 \end{figure}
 
 \begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_4.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=4}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=4}: For description, see \autoref{fig:threads_1}.}
     \label{fig:threads_4}
 \end{figure}
 
 \begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_8.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=8}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=8}: For description, see \autoref{fig:threads_1}.}
     \label{fig:threads_8}
 \end{figure}
 
@@ -95,28 +95,28 @@ In the rest of the figures with threads in \{8, 16, 32\}, we observe that the ve
 \begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_16.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=16}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=16}: For description, see \autoref{fig:threads_1}.}
     \label{fig:threads_16}
 \end{figure}
 
 \begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/thread_32.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=32}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of threads=32}: For description, see \autoref{fig:threads_1}.}
     \label{fig:threads_32}
 \end{figure}
 
 \subsubsection{Varying the number of threads with a constant number of nodes}
 
 
-In general, the plots between \autoref{fig:nodes_1} and \autoref{fig:nodes_10000} show that the \texttt{nest.Create} function has a consistent behavior. In all the plots, we can observe the discontinuity that happens around the points where the number of threads are 4, 8 and 16. At these points the slope changes significantly, and the reason behind it is the processor specification. Recall that we ran the experiments on a four-core processor. In general, the vectorized model is a bit slower than the non-vectorized model and the largest difference can be observed in the \autoref{fig:nodes_5000} with 5000 nodes. In the worst case the vectorized model took around 0.02 seconds creating 5000 nodes with 32 threads, wheras the non-vectorized model took around 0.006 seconds. The difference can be explained by the overhead coming from the virtual functions and the resize function that must allocate enough space for the 5000 nodes.
+In general, the plots between \autoref{fig:nodes_1} and \autoref{fig:nodes_10000} show that the \texttt{nest.Create} function has a consistent behavior. In all the plots, we can observe the discontinuity that happens around the points where the number of threads are 4, 8 and 16. At these points the slope changes significantly, and the reason behind it is the processor specification. Recall that we ran the experiments on a four-core processor. In general, the vectorized model is a bit slower than the non-vectorized model and the largest difference can be observed in the \autoref{fig:nodes_5000} with 5000 nodes. In the worst case the vectorized model took around 0.02 seconds creating 5000 nodes with 32 threads, whereas the non-vectorized model took around 0.006 seconds. The difference can be explained by the overhead coming from the virtual functions and the resize function that must allocate enough space for the 5000 nodes.
 
 \foreach \n in {1, 10, 30, 50, 100, 300, 500, 2000, 5000, 8000, 10000}
 {
 \begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/nodes_\n.png}
-    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of nodes=\n}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.Create} function with the number of nodes=\n}: For description, see \autoref{fig:threads_1}.}
     \label{fig:nodes_\n}
 \end{figure}
 }
@@ -132,7 +132,7 @@ Even with the \texttt{nest.GetStatus} not fully being optimized to support vecto
 \begin{figure}[t!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/get_thread_\n.png}
-    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of nodes=\n}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of nodes=\n}: For description, see \autoref{fig:threads_1}.}
     \label{fig:get_threads_\n}
 \end{figure}
 }
@@ -154,7 +154,7 @@ Reaching higher number of nodes as in \autoref{fig:get_nodes_8000} with 8000 nod
 {
 \begin{figure}[p]
     \includegraphics[width=\textwidth]{src/pic/get_nodes_\n.png}
-    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of threads=\n}: For description see \autoref{fig:threads_1}.}
+    \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of threads=\n}: For description, see \autoref{fig:threads_1}.}
     \label{fig:get_nodes_\n}
 \end{figure}
 }
@@ -162,7 +162,7 @@ Reaching higher number of nodes as in \autoref{fig:get_nodes_8000} with 8000 nod
 
 
 
-With the current implementation, the vectorization in its first prototype shows promissing results. The difference between the vectorized model and the non-vectorized is within fraction of seconds, and does not drastically impact NEST's performance. The next steps will be having a complete integration of the vectroization in the NestKernel and not only adjust the \texttt{GetStatus} function, but also the internal functions in NEST as the \texttt{update} function. The JIT module should then be combined with the vectorization to componsate for the slower behavior when using custom neuron and synapse models toghether in the connect calls.
+With the current implementation, the vectorization in its first prototype shows promising results. The difference between the vectorized model and the non-vectorized is within a fraction of seconds, and does not drastically impact NEST's performance. The next steps will be having a complete integration of the vectorization in the NestKernel and not only adjust the \texttt{GetStatus} function, but also the internal functions in NEST as the \texttt{update} function. The JIT module should then be combined with the vectorization to compensate for the slower behavior when using custom neuron and synapse models together in the connect calls.
 
 
 \afterpage{\blankpage}
