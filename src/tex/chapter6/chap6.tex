@@ -26,11 +26,11 @@ In order to retrieve information from the lightweight version and make the handl
 
 \subsection*{Vectorization}
 
-To address the problem with memory duplication explained above, we have introduced a new data structure in the NestKernel for handling models. The new data structure is based on the idea of a \emph{structure of arrays (SoA)}, where instead of having $n$ instances of the same model with $k$ attributes, we have exactly one instance that has $k$ attributes in the form of \emph{vectors} and each of these vectors has a size of $n$. The vectorization of models behaves like a container of nodes, so instead of updating the nodes separately, we can now tell the containers to updates the states of all nodes in parallel by utilizing the efficiency of \emph{SIMD} instructions in modern processors. The vectorization should also decrease the amount of \emph{cache misses}, as updating a container exploits the spatial locality of the items in the array and thus requires fewer data transfers from main memory.
+To address the problem with memory duplication explained above, we have introduced a new data structure in the NestKernel for handling models. The new data structure is based on the idea of a \emph{structure of arrays (SoA)}, where instead of having $n$ instances of the same model with $k$ attributes, we have exactly one instance that has $k$ attributes in the form of \emph{vectors} and each of these vectors has a size of $n$. The vectorization of models behaves like a container of nodes, so instead of updating the nodes separately, we can now tell the containers to update the states of all nodes in parallel by utilizing the efficiency of \emph{SIMD} instructions in modern processors. The vectorization should also decrease the amount of \emph{cache misses}, as updating a container exploits the spatial locality of the items in the array and thus requires fewer data transfers from main memory.
 
 \subsection*{Performance}
 
-The performance of the JIT module without using an external synapse model does not deviate a lot from running the simulation script without the JIT tool. However, when using an external custom synapse, we observe a significant decrease in the increase in runtime. The difference can be explained by the overhead of running some steps of the code generation pipeline twice, maintaining the functionality of the \texttt{NodeCollectionProxy} and finally replacing the network nodes and updating their parameters. The fact that the vectorization support in NestKernel is currently not leveraging the full potential is reflected by the fact that the performance of the \emph{vectorized} models and the \emph{non-vectorized} models are still quite similar on average.
+The performance of the JIT module without using an external synapse model does not deviate a lot from running the simulation script without the JIT tool. However, when using an external custom synapse, we observe a significant increase in runtime. The difference can be explained by the overhead of running some steps of the code generation pipeline twice, maintaining the functionality of the \texttt{NodeCollectionProxy} and finally replacing the network nodes and updating their parameters. The fact that the vectorization support in NestKernel is currently not leveraging the full potential is reflected by the fact that the performance of the \emph{vectorized} models and the \emph{non-vectorized} models are still quite similar on average.
 
 \section{Outlook}
 
@@ -52,5 +52,4 @@ After removing the \texttt{NodeCollectionProxy} with the introduced modularity, 
 
 
 Having custom written models built and loaded automatically at the runtime with any pre-configurations in the simulation script,  neuroscientists can enjoy all benefits of the code generation pipeline without any manual interaction, which results in more time for research and less time for typing.
-
 \cleardoublepage
