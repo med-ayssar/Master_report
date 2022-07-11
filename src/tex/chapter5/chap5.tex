@@ -53,7 +53,7 @@ For the number of the nodes, we have picked \{1, 10, 30, 50, 100, 300, 500, 2000
 
 \subsection{The \texttt{Create} function}
 
-\subsubsection{Varying the number of nodes with a constant number of threads}
+\subsubsection*{Varying the number of nodes with a constant number of threads}
 
  In the first configuration in testing the \texttt{nest.Create} function, we fix the number of threads and vary the number of nodes. From the  \autoref{fig:threads_1} until \autoref{fig:threads_32}, we show the results of the experiments. For each number of threads, we display the performance of the \texttt{nest.Create} function with the vectorized model against the non-vectorized models. 
 
@@ -106,7 +106,7 @@ In the rest of the figures with threads in \{8, 16, 32\}, we observe that the ve
     \label{fig:threads_32}
 \end{figure}
 
-\subsubsection{Varying the number of threads with a constant number of nodes}
+\subsubsection*{Varying the number of threads with a constant number of nodes}
 
 
 In general, the plots between \autoref{fig:nodes_1} and \autoref{fig:nodes_10000} show that the \texttt{nest.Create} function has a consistent behavior. In all the plots, we can observe the discontinuity that happens around the points where the number of threads are 4, 8 and 16. At these points the slope changes significantly, and the reason behind it is the processor specification. Recall that we ran the experiments on a four-core processor. In general, the vectorized model is a bit slower than the non-vectorized model and the largest difference can be observed in the \autoref{fig:nodes_5000} with 5000 nodes. In the worst case the vectorized model took around 0.02 seconds creating 5000 nodes with 32 threads, whereas the non-vectorized model took around 0.006 seconds. The difference can be explained by the overhead coming from the virtual functions and the resize function that must allocate enough space for the 5000 nodes.
@@ -121,7 +121,7 @@ In general, the plots between \autoref{fig:nodes_1} and \autoref{fig:nodes_10000
 \end{figure}
 }
 
-\subsubsection{The GetStatus function}
+\subsection{The GetStatus function}
 
 \subsubsection*{Varying the number of nodes with a constant number of threads}
 
