@@ -12,7 +12,7 @@
  
 \section{The JIT Module}
 
-\subsection{Running The JIT Module Without An external Synapse Type}
+\subsection*{Running The JIT Module Without An external Synapse Type}
 
 In the first experiment in testing the JIT module, we run the \emph{Brunel} network by explicitly using PyNESTML to generate the code for the required model, and then we run the same network by using the JIT module. The result of the experiment can be found in the \autoref{fig:max_average_min}.
 
@@ -129,7 +129,7 @@ Even with the \texttt{nest.GetStatus} not fully being optimized to support vecto
 
 \foreach \n in {2, 4, 8, 16, 32}
 {
-\begin{figure}[t!]
+\begin{figure}[ht!]
     \centering
     \includegraphics[width=\textwidth]{src/pic/get_thread_\n.png}
     \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of nodes=\n}: For description, see \autoref{fig:threads_1}.}
@@ -152,7 +152,7 @@ Reaching higher number of nodes as in \autoref{fig:get_nodes_8000} with 8000 nod
 
 \foreach \n in {1, 10, 30, 50, 100, 300, 500, 2000, 5000, 8000, 10000}
 {
-\begin{figure}[p!]
+\begin{figure}[ht!]
     \includegraphics[width=\textwidth]{src/pic/get_nodes_\n.png}
     \caption{\textbf{Performance of \texttt{nest.GetStatus} function with the number of threads=\n}: For description, see \autoref{fig:threads_1}.}
     \label{fig:get_nodes_\n}
